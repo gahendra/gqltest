@@ -1,0 +1,180 @@
+const { ApolloServer, gql } = require ('apollo-server');
+
+// This is a (sample) collection of entities we'll be able to query
+// the GraphQL server for.  A more complete example might fetch
+// from an existing data source like a REST API or database.
+
+// function getOfficeList (){
+    const officeList = [
+        {
+            uri: '1',
+            name: "Itonics",
+            loaction: "Hanumansthan",
+            number: 984100
+        },
+        {
+            uri: '2',
+            name: "Nucleus",
+            loaction: "Kathmandu",
+            number: 984100
+        }
+    ];
+
+    const staffList = [
+        {
+            uri: "1",
+            staffs: [
+                {
+                uri: '11',
+                name: "Staff Itonics",
+                officeId: 2
+                }
+            ]
+        },
+        {
+            uri: "2",
+            staffs: [
+                {
+                    uri: '12',
+                    name: "Staff Nucleus",
+                    officeId: 2
+                }
+            ]
+        },
+
+    ] ;
+
+    const workLoad = [
+        {
+            uri: "11",
+            wloads: [
+                {
+                    uri: '1',
+                    name: "Itonics Workload",
+                    staffId: 2
+                }
+            ]
+        },
+        {
+            uri: "12",
+            wloads: [
+                {
+                    uri: '12',
+                    name: "Nucleus workload",
+                    staffId: 2
+                }
+            ]
+        },
+
+    ] ;
+
+    // return entities;
+// }
+
+// Type definitions define the "shape" of your data and specify
+// which ways the data can be fetched from the GraphQL server.
+const typeDefs = gql`
+  # Comments in GraphQL are defined with the hash (#) symbol.
+
+  # This "Entity" type can be used in other type declarations.
+  type Office {
+    uri: String!
+    name: String!
+    loaction: String
+    number: Int
+    staffs: [Staff]
+  }
+
+  type Staff{
+    uri: String!
+    name: String!
+    officeId: String
+    wloads : [Workload]
+  }
+
+  type Workload{
+    uri: String!
+    name: String!
+    staffId: String
+  }
+
+  # The "Query" type is the root of all GraphQL queries.
+   type Query {
+    getOfficeList: [Office]
+    getOfficeDetail(uri: String): Office
+  }
+
+  #type Mutation {
+    #getEntities: [Entity]
+  #}
+`;
+
+// Resolvers define the technique for fetching the types in the
+// schema.  We'll retrieve entities from the "enties" array above.
+const resolvers = {
+  Query: {
+    getOfficeList: () => {
+       return officeList
+    },
+    getOfficeDetail: (root, arg) =>  {
+        const uri = arg.uri;
+        return officeList.filter((office) => {
+            office.uri == uri;
+        });
+    }
+  },
+  Office: {
+    staffs:  (root, arg) => {
+       const officeUri =  root.uri;
+
+       return staffList.filter((staff) => {
+                staff.uri == officeUri;
+            }).map(list => list.staffs );
+    }
+  },
+    Staff: {
+        wloads:  (root, arg) => {
+            const wloadUri =  root.uri;
+            return [
+                {
+                    uri: wloadUri,
+                    name: "Niroj"
+                }
+            ];
+
+        }
+    }
+};
+// In the most basic sense, the ApolloServer can be started
+// by passing type definitions (typeDefs) and the resolvers
+// responsible for fetching the data for those types.
+const server = new ApolloServer({ typeDefs, resolvers });
+
+// This `listen` method launches a web-server.  Existing apps
+// can utilize middleware options, which we'll discuss later.
+server.listen().then(({ url }) => {
+  console.log(`🚀  Server ready at ${url}`);
+});
+
+// Playground code
+/*
+query getOffice{
+  getOfficeList{
+    uri
+    name
+  }
+}
+
+query getOfficeWithStaff{
+  getOfficeList{
+    uri
+    name
+    loaction
+    staffs{
+      uri
+      name
+    }
+  }
+}
+*/
+
